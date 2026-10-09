@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="HidroSmart IoT - Portal Hidroponik Presisi">
+  <title>HidroSmart IoT - Portal</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    /* Homepage-specific styles */
+    html { scroll-behavior: smooth; }
+    .home-wrapper {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 20px;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+    .home-wrapper.is-ready {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Home Header & Navbar */
+    .home-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 40px;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--bg-card-border);
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 999;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    
+    /* Push content down so it's not hidden behind fixed header */
+    .home-wrapper {
+      padding-top: 80px; 
+    }
+    
+    .nav-menu {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+    }
+    .nav-menu a {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: color 0.2s ease;
+      text-decoration: none;
+    }
+    .nav-menu a:hover {
+      color: var(--accent-mint);
+    }
+
+    /* Hero Section */
+    .home-hero {
+      text-align: center;
+      padding: 48px 24px 32px;
+      background: var(--bg-card);
+      border: 1px solid var(--bg-card-border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 24px;
+      position: relative;
+    }
+    .home-hero h1 {
+      font-size: 2.8rem;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: -0.03em;
+      margin-bottom: 12px;
+      line-height: 1.1;
+    }
+    .home-hero h1 span {
+      color: var(--accent-mint);
+    }
+    .home-hero p {
+      font-size: 1rem;
+      color: var(--text-muted);
+      max-width: 560px;
+      margin: 0 auto 28px;
+      line-height: 1.6;
+    }
+
+    /* CTA Button */
+    .btn-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent-mint);
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 12px 28px;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    [data-theme="dark"] .btn-cta { color: #111; }
+    .btn-cta:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+    .btn-cta svg { width: 18px; height: 18px; }
+
+    /* Dashboard Preview Frame */
+    .preview-section { margin-bottom: 40px; }
+    .preview-frame {
+      background: var(--bg-card);
+      border: 1px solid var(--bg-card-border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+    }
+    .preview-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: var(--actuator-bg);
+      border-bottom: 1px solid var(--bg-card-border);
+    }
+    .preview-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .preview-url {
+      flex: 1;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .preview-iframe-wrap {
+      position: relative;
+      width: 100%;
+      /* Scale factor = container-width / 1440. Container ≈ 100% of .preview-frame */
+      /* Visible height = 1400 * scale. We use aspect-ratio trick for responsiveness */
+      aspect-ratio: 1440 / 900;
+      overflow: hidden;
+    }
+    .preview-iframe-wrap iframe {
+      width: 1440px;
+      height: 1400px;
+      border: none;
+      pointer-events: none;
+      /* Scale dynamically: 100cqi / 1440 ≈ container-relative scaling */
+      transform-origin: top left;
+    }
+
+    /* Long Explanation Section (BMC) */
+    .explanation-section {
+      margin-bottom: 40px;
+    }
+    .explanation-header {
+      text-align: center;
+      margin-bottom: 32px;
+      padding-top: 20px;
+    }
+    .explanation-header h2 {
+      font-size: 2.2rem;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+    .explanation-header p {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
+    
+    .bmc-category {
+      background: var(--bg-card);
+      border: 1px solid var(--bg-card-border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .bmc-category h3 {
+      font-size: 1.4rem;
+      color: var(--accent-mint);
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--bg-card-border);
+      padding-bottom: 10px;
+    }
+    .bmc-grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+    .bmc-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    .bmc-item h4 {
+      color: var(--text-main);
+      font-size: 1.05rem;
+      margin-bottom: 8px;
+    }
+    .bmc-item ul {
+      margin-left: 20px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+    .bmc-item li { margin-bottom: 6px; }
+
+    /* Login Modal */
+    .login-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--modal-overlay-bg);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    .login-modal-overlay.active { opacity: 1; visibility: visible; }
+    .login-modal {
+      background: var(--bg-primary);
+      border: 1px solid var(--bg-card-border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: var(--shadow-md);
+      transform: translateY(20px);
+      transition: transform 0.3s ease;
+    }
+    .login-modal-overlay.active .login-modal { transform: translateY(0); }
+    .login-header { text-align: center; margin-bottom: 24px; }
+    .login-header h2 { color: var(--text-main); margin-bottom: 4px; }
+    .login-header p { color: var(--text-muted); font-size: 0.85rem; }
+    
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block;
+      color: var(--text-main);
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--bg-card-border);
+      background: var(--input-bg);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      outline: none;
+    }
+    .form-group input:focus { border-color: var(--accent-mint); }
+    .login-error {
+      color: var(--accent-danger);
+      font-size: 0.8rem;
+      margin-bottom: 16px;
+      text-align: center;
+      display: none;
+    }
+    .login-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    .btn-cancel {
+      flex: 1;
+      padding: 10px;
+      background: transparent;
+      border: 1px solid var(--bg-card-border);
+      color: var(--text-main);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn-login {
+      flex: 1;
+      padding: 10px;
+      background: var(--accent-mint);
+      border: none;
+      color: #fff;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+      .home-hero h1 { font-size: 1.8rem; }
+      .bmc-grid-2, .bmc-grid-3 { grid-template-columns: 1fr; }
+      .nav-menu { display: none; }
+    }
+  </style>
+</head>
+<body data-theme="light" id="top">
+
+  <!-- Splash Screen -->
+  <div id="splash-screen" class="splash-overlay">
+    <div class="splash-content">
+      <div class="splash-plant">
+        <svg viewBox="0 0 200 260" width="160" height="210" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <g class="splash-pot-group">
+            <path class="splash-pot" d="M60 200 L140 200 L130 250 L70 250 Z" fill="#8B5E3C" stroke="#6D4C2E" stroke-width="2"/>
+            <path class="splash-pot-rim" d="M55 195 L145 195 L145 205 L55 205 Z" fill="#A0724B" stroke="#6D4C2E" stroke-width="1.5" rx="3"/>
+            <ellipse class="splash-soil" cx="100" cy="200" rx="38" ry="6" fill="#5C3D2E"/>
+          </g>
+          <line class="splash-stem" x1="100" y1="200" x2="100" y2="80" stroke="#2ECC71" stroke-width="4" stroke-linecap="round"/>
+          <path class="splash-leaf splash-leaf-1" d="M100 160 Q70 140 55 155 Q70 150 100 160" fill="#27AE60" opacity="0"/>
+          <path class="splash-leaf splash-leaf-2" d="M100 145 Q130 125 145 140 Q130 135 100 145" fill="#2ECC71" opacity="0"/>
+          <path class="splash-leaf splash-leaf-3" d="M100 125 Q65 105 50 120 Q65 115 100 125" fill="#27AE60" opacity="0"/>
+          <path class="splash-leaf splash-leaf-4" d="M100 108 Q135 88 150 103 Q135 98 100 108" fill="#2ECC71" opacity="0"/>
+          <path class="splash-leaf splash-leaf-5" d="M100 85 Q75 55 60 70 Q80 60 100 85" fill="#1ABC9C" opacity="0"/>
+          <path class="splash-leaf splash-leaf-6" d="M100 85 Q125 55 140 70 Q120 60 100 85" fill="#1ABC9C" opacity="0"/>
+          <path class="splash-leaf splash-leaf-7" d="M100 80 Q100 45 100 40 Q95 55 90 65 Q95 60 100 80" fill="#16A085" opacity="0"/>
+          <circle class="splash-drop splash-drop-1" cx="75" cy="175" r="3" fill="#00e5ff" opacity="0"/>
+          <circle class="splash-drop splash-drop-2" cx="125" cy="180" r="2.5" fill="#00e5ff" opacity="0"/>
+          <circle class="splash-drop splash-drop-3" cx="90" cy="185" r="2" fill="#00e5ff" opacity="0"/>
+          <g transform="translate(65, 65)">
+            <g class="splash-flower splash-flower-1">
+              <circle cx="6" cy="0" r="4" fill="#FF8FB1"/><circle cx="-6" cy="0" r="4" fill="#FF8FB1"/>
+              <circle cx="0" cy="6" r="4" fill="#FF8FB1"/><circle cx="0" cy="-6" r="4" fill="#FF8FB1"/>
+              <circle cx="4" cy="-4" r="3.5" fill="#FFB3C6"/><circle cx="-4" cy="4" r="3.5" fill="#FFB3C6"/>
+              <circle cx="0" cy="0" r="3" fill="#FFD700"/>
+            </g>
+          </g>
+          <g transform="translate(135, 65)">
+            <g class="splash-flower splash-flower-2">
+              <circle cx="6" cy="0" r="4" fill="#C9A0DC"/><circle cx="-6" cy="0" r="4" fill="#C9A0DC"/>
+              <circle cx="0" cy="6" r="4" fill="#C9A0DC"/><circle cx="0" cy="-6" r="4" fill="#C9A0DC"/>
+              <circle cx="4" cy="-4" r="3.5" fill="#DEC0F1"/><circle cx="-4" cy="4" r="3.5" fill="#DEC0F1"/>
+              <circle cx="0" cy="0" r="3" fill="#FFD700"/>
+            </g>
+          </g>
+          <g transform="translate(100, 38)">
+            <g class="splash-flower splash-flower-3">
+              <circle cx="7" cy="0" r="5" fill="#FF6B9D"/><circle cx="-7" cy="0" r="5" fill="#FF6B9D"/>
+              <circle cx="0" cy="7" r="5" fill="#FF6B9D"/><circle cx="0" cy="-7" r="5" fill="#FF6B9D"/>
+              <circle cx="5" cy="-5" r="4.5" fill="#FF8FB1"/><circle cx="-5" cy="5" r="4.5" fill="#FF8FB1"/>
+              <circle cx="0" cy="0" r="4" fill="#FFD700"/>
+            </g>
+          </g>
+        </svg>
+      </div>
+      <div class="splash-text">
+        <h2 class="splash-title">HIDRO-SMART IoT</h2>
+        <p class="splash-subtitle">Memuat Portal Hidroponik...</p>
+      </div>
+      <div class="splash-loader-bar">
+        <div class="splash-loader-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="home-wrapper" id="home-wrapper">
+
+    <!-- Header -->
+    <header class="home-header">
+      <div class="brand-area" style="display:flex; align-items:center; gap:14px;">
+        <div class="brand-text">
+          <h1 style="font-size:1.2rem; margin:0; color:var(--text-main);">HIDRO-SMART IoT</h1>
+        </div>
+      </div>
+      
+      <!-- Navbar Menu -->
+      <div class="nav-menu">
+        <a href="#top">Beranda</a>
+        <a href="#preview">Live Preview</a>
+        <a href="#bisnis">Profil Bisnis</a>
+      </div>
+
+      <div class="header-status-area">
+        <button id="btn-toggle-theme" style="padding:8px; background:var(--actuator-bg); border:1px solid var(--bg-card-border); border-radius:8px; cursor:pointer; color:var(--text-main);">
+          <svg id="theme-icon-sun" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: none;">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+          </svg>
+          <svg id="theme-icon-moon" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="home-hero" id="hero">
+      <h1>Pantau. Otomasi. <span>Panen.</span></h1>
+      <p>Kelola sistem hidroponik NFT Anda dengan monitoring real-time, kontrol aktuator, dan auto-balancer nutrisi langsung dari browser.</p>
+      <button class="btn-cta" onclick="openLoginModal()">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+        Buka Dashboard
+      </button>
+    </section>
+
+    <!-- Live Dashboard Preview (Values Zeroed) -->
+    <section class="preview-section" id="preview">
+      <div class="preview-frame">
+        <div class="preview-toolbar">
+          <div class="preview-dot" style="background:#ff5f57;"></div>
+          <div class="preview-dot" style="background:#febc2e;"></div>
+          <div class="preview-dot" style="background:#28c840;"></div>
+          <div class="preview-url">localhost:8000/dashboard.html?preview=1 (Sample Data: 0)</div>
+        </div>
+        <div class="preview-iframe-wrap">
+          <iframe id="preview-iframe" src="dashboard.html?preview=1" title="Dashboard Preview" loading="lazy" sandbox="allow-same-origin allow-scripts"></iframe>
+        </div>
+      </div>
+    </section>
+
+    <!-- Full Business Profile Explanation -->
+    <section class="explanation-section" id="bisnis">
+      <div class="explanation-header">
+        <h2>Profil & Strategi Bisnis</h2>
+        <p>Analisis Produk dan Prospek Pertanian Presisi</p>
+      </div>
+      
+      <div class="bmc-category">
+        <h3>1. Value Propositions (Nilai Tawar)</h3>
+        <div class="bmc-grid-2">
+          <div class="bmc-item">
+            <h4>Mengapa Memilih Kami?</h4>
+            <ul>
+              <li><b>Sayuran Segar Tanpa Pestisida:</b> Dijamin bersih, sehat, higienis, dan bebas dari bahan kimia berbahaya.</li>
+              <li><b>Kualitas & Daya Tahan:</b> Sayuran hidroponik memiliki tekstur lebih renyah (crispy) dan masa simpan yang jauh lebih lama dibanding sayuran konvensional.</li>
+            </ul>
+          </div>
+          <div class="bmc-item">
+            <h4>Keunggulan Sistem</h4>
+            <ul>
+              <li><b>Pasokan Stabil Sepanjang Tahun:</b> Tidak terpengaruh oleh musim atau cuaca ekstrem karena menggunakan sistem semi-greenhouse dan kontrol presisi.</li>
+              <li><b>Transparansi & Traceability:</b> Konsumen bisa mengetahui asal-usul sayur dan cara penanamannya secara jelas.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="bmc-category">
+        <h3>2. Segmen & Hubungan Pelanggan</h3>
+        <div class="bmc-grid-2">
+          <div class="bmc-item">
+            <h4>Customer Segments</h4>
+            <ul>
+              <li><b>Masyarakat Urban (Menengah-Atas):</b> Peduli kesehatan, kualitas makanan, dan gaya hidup clean eating.</li>
+              <li><b>Bisnis HOREKA & Kuliner:</b> Restoran, kafe sehat, hotel, & katering premium yang butuh pasokan segar rutin.</li>
+              <li><b>Retail Premium:</b> Swalayan modern & toko lokal penyedia produk organik/hidroponik.</li>
+              <li><b>Komunitas Veggie/Vegan:</b> Kelompok konsumen dengan pola makan/diet berbasis sayuran.</li>
+            </ul>
+          </div>
+          <div class="bmc-item">
+            <h4>Customer Relationship</h4>
+            <ul>
+              <li><b>Sistem Langganan:</b> Paket mingguan/bulanan sayur segar (menjamin recurring revenue).</li>
+              <li><b>Edukasi & Konten:</b> Berbagi tips resep masakan sehat, cara simpan sayur, dan dokumentasi kebun di media sosial.</li>
+              <li><b>Garansi Kesegaran:</b> Layanan pelanggan responsif & garansi ganti rugi jika sayur rusak saat pengiriman.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="bmc-category">
+        <h3>3. Infrastruktur Kunci</h3>
+        <div class="bmc-grid-3">
+          <div class="bmc-item">
+            <h4>Key Activities</h4>
+            <ul>
+              <li>Budidaya & Perawatan (Pembibitan, kontrol nutrisi PPM/pH).</li>
+              <li>Panen & QC (Penyeleksian & grading).</li>
+              <li>Pengemasan ramah lingkungan.</li>
+              <li>Pemasaran digital & Penjualan.</li>
+            </ul>
+          </div>
+          <div class="bmc-item">
+            <h4>Key Resources</h4>
+            <ul>
+              <li><b>Fisik:</b> Greenhouse, instalasi NFT/DFT, pompa, sensor.</li>
+              <li><b>Manusia:</b> Ahli agronomi & tim packing.</li>
+              <li><b>Intelektual:</b> SOP racikan nutrisi & manajemen jadwal tanam.</li>
+            </ul>
+          </div>
+          <div class="bmc-item">
+            <h4>Key Partners</h4>
+            <ul>
+              <li>Pemasok Input (Benih, rockwool, AB Mix).</li>
+              <li>Pemasok perangkat IoT & sensor.</li>
+              <li>Mitra logistik instan (GoSend, dll).</li>
+              <li>Pemerintah (Dinas Pertanian).</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="bmc-category">
+        <h3>4. Finansial & Distribusi</h3>
+        <div class="bmc-grid-3">
+          <div class="bmc-item">
+            <h4>Channels</h4>
+            <ul>
+              <li>D2C via Media Sosial & WhatsApp.</li>
+              <li>E-Commerce (Tokopedia, Segari, dll).</li>
+              <li>B2B Direct Supply ke Restoran.</li>
+              <li>Event & Farmers Market (Car Free Day).</li>
+            </ul>
+          </div>
+          <div class="bmc-item">
+            <h4>Cost Structure</h4>
+            <ul>
+              <li><b>CAPEX:</b> Pembuatan greenhouse, pipa baja ringan, lampu LED.</li>
+              <li><b>OPEX:</b> Listrik pompa, air, nutrisi, benih.</li>
+              <li>Biaya pengemasan dan promosi.</li>
+              <li>Gaji karyawan.</li>
+            </ul>
+          </div>
+          <div class="bmc-item">
+            <h4>Revenue Streams</h4>
+            <ul>
+              <li>Penjualan sayur daun utama (selada, pakcoy, kale) & buah.</li>
+              <li>Pendapatan paket langganan rutin.</li>
+              <li>Sampingan: Penjualan starter kit hidroponik untuk edukasi.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Login Modal -->
+  <div id="login-modal" class="login-modal-overlay">
+    <div class="login-modal">
+      <div class="login-header">
+        <h2>Akses Dashboard</h2>
+        <p>Silakan login untuk memantau perangkat Anda.</p>
+      </div>
+      <div id="login-error" class="login-error">Username atau Password salah! (Gunakan: admin / admin123)</div>
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" placeholder="Masukkan username..." autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="Masukkan password...">
+      </div>
+      <div class="login-actions">
+        <button class="btn-cancel" onclick="closeLoginModal()">Batal</button>
+        <button class="btn-login" onclick="processLogin()">Login</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Responsive iframe scaling
+    (function() {
+      function scalePreview() {
+        const wrap = document.querySelector('.preview-iframe-wrap');
+        const iframe = document.getElementById('preview-iframe');
+        if (!wrap || !iframe) return;
+        const containerWidth = wrap.clientWidth;
+        const scale = containerWidth / 1440;
+        iframe.style.transform = 'scale(' + scale + ')';
+        wrap.style.height = (1400 * scale) + 'px';
+      }
+      window.addEventListener('load', scalePreview);
+      window.addEventListener('resize', scalePreview);
+      // Also run after splash screen finishes
+      setTimeout(scalePreview, 2600);
+    })();
+
+    // Theme Management
+    const btnToggle = document.getElementById('btn-toggle-theme');
+    const iconSun = document.getElementById('theme-icon-sun');
+    const iconMoon = document.getElementById('theme-icon-moon');
+
+    function getSavedTheme() {
+      try {
+        const conf = localStorage.getItem('hydro_dash_config');
+        if (conf) {
+          const parsed = JSON.parse(conf);
+          if (parsed.theme) return parsed.theme;
+        }
+      } catch (e) {}
+      return localStorage.getItem('hydro-theme') || 'light';
+    }
+
+    function applyTheme(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      document.body.setAttribute('data-theme', t);
+      if (t === 'light') {
+        iconSun.style.display = 'block';
+        iconMoon.style.display = 'none';
+      } else {
+        iconSun.style.display = 'none';
+        iconMoon.style.display = 'block';
+      }
+    }
+
+    let currentTheme = getSavedTheme();
+    applyTheme(currentTheme);
+
+    btnToggle.addEventListener('click', () => {
+      currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      applyTheme(currentTheme);
+      localStorage.setItem('hydro-theme', currentTheme);
+      
+      try {
+        let conf = localStorage.getItem('hydro_dash_config');
+        let parsed = conf ? JSON.parse(conf) : {};
+        parsed.theme = currentTheme;
+        localStorage.setItem('hydro_dash_config', JSON.stringify(parsed));
+      } catch (e) {}
+      
+      const iframe = document.querySelector('iframe');
+      if (iframe) iframe.src = iframe.src;
+    });
+
+    // Splash Screen Logic
+    const splash = document.getElementById('splash-screen');
+    const homeWrapper = document.getElementById('home-wrapper');
+    const loaderFill = splash ? splash.querySelector('.splash-loader-fill') : null;
+
+    if (splash && loaderFill) {
+      let progress = 0;
+      const totalDuration = 2200;
+      const tickMs = 24;
+
+      const ticker = setInterval(() => {
+        progress = Math.min(progress + 100 / (totalDuration / tickMs), 100);
+        loaderFill.style.width = progress + '%';
+      }, tickMs);
+
+      setTimeout(() => {
+        clearInterval(ticker);
+        loaderFill.style.width = '100%';
+        splash.style.opacity = '0';
+        setTimeout(() => {
+          splash.remove();
+          homeWrapper.classList.add('is-ready');
+        }, 400);
+      }, totalDuration);
+    } else {
+      homeWrapper.classList.add('is-ready');
+    }
+
+    // Listen for storage changes from dashboard to keep themes synced live
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'hydro_dash_config' || e.key === 'hydro-theme') {
+        const newTheme = getSavedTheme();
+        if (newTheme !== currentTheme) {
+          currentTheme = newTheme;
+          applyTheme(newTheme);
+        }
+      }
+    });
+
+    // Login Modal Logic
+    const modal = document.getElementById('login-modal');
+    const errorMsg = document.getElementById('login-error');
+    const userIn = document.getElementById('username');
+    const passIn = document.getElementById('password');
+
+    function openLoginModal() {
+      modal.classList.add('active');
+      errorMsg.style.display = 'none';
+      userIn.value = '';
+      passIn.value = '';
+      userIn.focus();
+    }
+    function closeLoginModal() { modal.classList.remove('active'); }
+    function processLogin() {
+      const u = userIn.value.trim();
+      const p = passIn.value.trim();
+      if (u === 'admin' && p === 'admin123') {
+        window.location.href = 'dashboard.html';
+      } else {
+        errorMsg.style.display = 'block';
+        passIn.value = '';
+      }
+    }
+
+    passIn.addEventListener('keyup', (e) => { if (e.key === 'Enter') processLogin(); });
+    userIn.addEventListener('keyup', (e) => { if (e.key === 'Enter') passIn.focus(); });
+  </script>
+</body>
+</html>
