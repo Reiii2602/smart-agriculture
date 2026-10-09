@@ -3,6 +3,12 @@
 Thumbs.db
 desktop.ini
 
+# Compressed & Extracted Archive Files
+*.zip
+*.tar.gz
+*.rar
+_extracted_zip/
+
 # Node / Dependencies
 node_modules/
 npm-debug.log*
